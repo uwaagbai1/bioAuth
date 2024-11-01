@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html class="h-full" data-theme="true" data-theme-mode="light" dir="ltr" lang="en">
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+    
+    <title>{% block title %} - Multi-Factor Authentication{% endblock %}</title>
+
+    <!-- Stylesheets -->
+    <link href="{% static 'fonts.googleapis.com/css2fb67.css?family=Inter:wght@400;500;600;700&amp;display=swap' %}" rel="stylesheet">
+    <link href="{% static 'vendors/apexcharts/apexcharts.css' %}" rel="stylesheet">
+    <link href="{% static 'vendors/keenicons/styles.bundle.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="{%  static 'media/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{%  static 'media/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{%  static 'media/favicon-16x16.png' %}">
+    <link rel="manifest" href="{%  static 'media/site.webmanifest' %}">
+
+    <!-- Theme Mode -->
+    <script>
+        const defaultThemeMode = 'light'; 
+        let themeMode;
+
+        if (document.documentElement) {
+            if (localStorage.getItem('theme')) {
+                themeMode = localStorage.getItem('theme');
+            } else if (document.documentElement.hasAttribute('data-theme-mode')) {
+                themeMode = document.documentElement.getAttribute('data-theme-mode');
+            } else {
+                themeMode = defaultThemeMode;
+            }
+
+            if (themeMode === 'system') {
+                themeMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            document.documentElement.classList.add(themeMode);
+        }
+    </script>
+    <style>
+        .page-bg {
+            background-image: url("{% static 'media/images/2600x1200/bg-10.png' %}");
+        }
+        .dark .page-bg {
+            background-image: url("{% static 'media/images/2600x1200/bg-10-dark.png' %}");
+        }
+    </style>
+</head>
+<body class="antialiased flex h-full text-base text-gray-700 dark:bg-coal-500">
+    <div class="flex items-center justify-center grow bg-center bg-no-repeat page-bg">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/core.bundle.js' %}"></script>
+    <script src="{% static 'vendors/apexcharts/apexcharts.min.js' %}"></script>
+</body>
+</html>

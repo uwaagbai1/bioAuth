@@ -1,0 +1,84 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block title %} Dashboard {% endblock title %}
+{% block content %}
+
+    <main class="grow content pt-5" id="content" role="content">
+    
+    {% include 'dashboard/menu.html' %}
+        
+     <!-- Container -->
+     <div class="container-fixed">
+      <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+       <div class="flex flex-col justify-center gap-2">
+        <h1 class="text-2xl font-semibold leading-none text-gray-900 mb1.5">
+         Account
+        </h1>
+        <div class="flex items-center gap-2 text-sm font-medium">
+         <span class="text-gray-800 font-medium">
+          {{  request.user.profile.last_name }}, {{  request.user.profile.first_name }}
+         </span>
+         <a class="text-gray-700 hover:text-primary">
+          {{  request.user.email }}
+         </a>
+         <span class="size-0.75 bg-gray-600 rounded-full">
+         </span>
+         <a class="font-semibold btn btn-link link" href="{% url 'account-information' %}">
+          Personal Info
+         </a>
+        </div>
+       </div>
+      </div>
+     </div>
+     <!-- End of Container -->
+     <!-- Container -->
+     <div class="container-fixed">
+      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-7.5">
+
+       <div class="card p-5 lg:p-7.5 lg:pt-7">
+        <div class="flex flex-col gap-4">
+         <div class="flex flex-col gap-3">
+          <a class="text-base font-medium leading-none text-gray-900 hover:text-primary-active" href="{% url 'account-update' %}">
+           Change Account information
+          </a>
+          <span class="text-2sm text-gray-700 leading-5">
+           Change your user and profile details.
+          </span>
+         </div>
+        </div>
+       </div>
+
+       <div class="card p-5 lg:p-7.5 lg:pt-7">
+        <div class="flex flex-col gap-4">
+         <div class="flex flex-col gap-3">
+          <a class="text-base font-medium leading-none text-gray-900 hover:text-primary-active" href="{% url 'setup-fingerprint' %}">
+           Setup Fingerprint Authentication
+          </a>
+          <span class="text-2sm text-gray-700 leading-5">
+           Set Up your account for authentication with fingerprint.
+          </span>
+         </div>
+        </div>
+       </div>
+          
+       <div class="card p-5 lg:p-7.5 lg:pt-7">
+        <div class="flex flex-col gap-4">
+         <div class="flex flex-col gap-3">
+          <a class="text-base font-medium leading-none text-gray-900 hover:text-primary-active" href="{% url 'setup-face' %}">
+           Setup Face ID Authentication
+          </a>
+          <span class="text-2sm text-gray-700 leading-5">
+           Set Up your account for authentication with face id.
+          </span>
+         </div>
+        </div>
+       </div>
+          
+      </div>
+     </div>
+
+     <!-- End of Container -->
+    </main>
+    <!-- End of Content -->
+    <!-- Footer -->
+{% endblock content %}

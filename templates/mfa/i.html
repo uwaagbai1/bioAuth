@@ -1,0 +1,336 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block title %}MFA Setup Fingerprint{% endblock title %}
+
+{% block content %}
+<main class="grow content pt-5" id="content" role="content">
+    {% include 'dashboard/menu.html' %}
+    
+    {% csrf_token %}
+    <div class="container-fixed text-center">
+        <h1 class="text-lg leading-5 font-semibold text-gray-900">Fingerprint Setup</h1><br>
+        <div id="loader" class="mt-3" style="display: none;">Initializing fingerprint scanner...</div>
+        
+        <input type="hidden" id="userEmail" value="{{ userEmail }}">
+        <input type="hidden" id="userName" value="{{ userName }}">
+        
+        {% if user.mfaprofile.fingerprint_data %}
+            <button id="registerBtn" class="btn btn-primary">Register Fingerprint Again</button>
+        {% else %}
+            <button id="registerBtn" class="btn btn-primary">Register Fingerprint</button>
+        {% endif %}
+        <button id="cancelBtn" class="btn btn-secondary" style="display: none;">Cancel</button>
+        <div id="statusMessage" class="mt-3"></div>
+    </div>
+    
+    <!-- Progress and quality indicators remain the same -->
+    <div class="text-center mt-4">
+        <div id="captureProgress" style="display: none; max-width: 400px; margin: 0 auto;">
+            <div class="progress-bar">
+                <div id="progressBar" class="progress-fill"></div>
+            </div>
+            <p id="progressText" class="mt-2 text-gray-600">Initializing capture...</p>
+        </div>
+
+        <div id="qualityIndicator" style="display: none; max-width: 400px; margin: 20px auto;">
+            <div class="quality-label">
+                <span>Capture Quality</span>
+                <span id="qualityScore">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div id="qualityBar" class="quality-fill"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        width: 0%;
+        height: 100%;
+        background-color: #007bff;
+        transition: width 0.3s ease;
+    }
+    .quality-fill {
+        width: 0%;
+        height: 100%;
+        background-color: #28a745;
+        transition: width 0.3s ease;
+    }
+    .quality-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        color: #495057;
+    }
+    #statusMessage {
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+    .status-error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .status-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .status-info {
+        background-color: #cce5ff;
+        color: #004085;
+    }
+</style>
+
+<script>
+    class FingerprintSetup {
+        constructor() {
+            this.registerBtn = document.getElementById('registerBtn');
+            this.cancelBtn = document.getElementById('cancelBtn');
+            this.statusMessage = document.getElementById('statusMessage');
+            this.captureProgress = document.getElementById('captureProgress');
+            this.progressBar = document.getElementById('progressBar');
+            this.progressText = document.getElementById('progressText');
+            this.qualityIndicator = document.getElementById('qualityIndicator');
+            this.qualityBar = document.getElementById('qualityBar');
+            this.qualityScore = document.getElementById('qualityScore');
+            this.userEmail = document.getElementById('userEmail').value;
+            this.userName = document.getElementById('userName').value;
+
+            this.isCapturing = false;
+            this.setupEventListeners();
+        }
+
+        setupEventListeners() {
+            this.registerBtn.addEventListener('click', () => this.startRegistration());
+            this.cancelBtn.addEventListener('click', () => this.cancelRegistration());
+        }
+
+        getRpId() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'localhost';
+            }
+            return window.location.hostname;
+        }
+
+        async startRegistration() {
+            if (this.isCapturing) return;
+
+            try {
+                this.isCapturing = true;
+                this.showProgress();
+                
+                if (!window.PublicKeyCredential) {
+                    throw new Error('WebAuthn is not supported in this browser');
+                }
+
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (!available) {
+                    throw new Error('No fingerprint scanner is available on this device');
+                }
+
+                const response = await fetch('{% url "fingerprint-challenge" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': this.getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) throw new Error('Failed to get challenge');
+                const { challenge, userId } = await response.json();
+
+                this.updateProgress(30, 'Initializing fingerprint scanner...');
+                
+                const rpId = this.getRpId();
+                console.log('Using RP ID:', rpId); // Debug log
+
+                const publicKeyCredentialCreationOptions = {
+                    challenge: this.base64ToArrayBuffer(challenge),
+                    rp: {
+                        name: rpId,
+                        id: rpId
+                    },
+                    user: {
+                        id: this.base64ToArrayBuffer(userId),
+                        name: this.userEmail,
+                        displayName: this.userName
+                    },
+                    pubKeyCredParams: [
+                        { type: 'public-key', alg: -7 },  // ES256
+                        { type: 'public-key', alg: -257 } // RS256
+                    ],
+                    authenticatorSelection: {
+                        authenticatorAttachment: 'platform',
+                        userVerification: 'required',
+                        requireResidentKey: false
+                    },
+                    timeout: 60000,
+                    attestation: 'none' // Changed to 'none' for broader compatibility
+                };
+
+                this.updateProgress(50, 'Waiting for fingerprint...');
+                
+                console.log('Credential creation options:', publicKeyCredentialCreationOptions); // Debug log
+
+                const credential = await navigator.credentials.create({
+                    publicKey: publicKeyCredentialCreationOptions
+                });
+
+                if (!credential) {
+                    throw new Error('Failed to create credential');
+                }
+
+                this.updateProgress(75, 'Processing fingerprint data...');
+
+                const credentialData = {
+                    id: credential.id,
+                    rawId: this.arrayBufferToBase64(credential.rawId),
+                    response: {
+                        clientDataJSON: this.arrayBufferToBase64(credential.response.clientDataJSON),
+                        attestationObject: this.arrayBufferToBase64(credential.response.attestationObject)
+                    },
+                    type: credential.type
+                };
+
+                console.log('Sending credential data:', credentialData); // Debug log
+
+                const saveResponse = await fetch('{% url "fingerprint-register" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCsrfToken()
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(credentialData)
+                });
+
+                if (!saveResponse.ok) {
+                    const errorData = await saveResponse.json();
+                    throw new Error(errorData.error || 'Failed to save fingerprint data');
+                }
+
+                this.updateProgress(100, 'Fingerprint registered successfully!');
+                this.showSuccess('Setup complete! Redirecting...');
+                setTimeout(() => window.location.href = '{% url "setup-fingerprint" %}', 2000);
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                this.showError(`Registration failed: ${error.message}`);
+            } finally {
+                this.isCapturing = false;
+                this.hideProgress();
+            }
+        }
+
+        getCsrfToken() {
+            const token = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!token) {
+                throw new Error('CSRF token not found');
+            }
+            return token.value;
+        }
+
+        base64ToArrayBuffer(base64) {
+            const binary = window.atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+
+        updateProgress(percent, message) {
+            this.progressBar.style.width = `${percent}%`;
+            this.progressText.textContent = message;
+            this.updateQuality(percent);
+        }
+
+        updateQuality(percent) {
+            this.qualityBar.style.width = `${percent}%`;
+            this.qualityScore.textContent = `${percent}%`;
+            this.qualityBar.style.backgroundColor = percent < 40 ? '#dc3545' : 
+                                                  percent < 70 ? '#ffc107' : 
+                                                  '#28a745';
+        }
+
+        showProgress() {
+            this.registerBtn.disabled = true;
+            this.cancelBtn.style.display = 'inline-block';
+            this.captureProgress.style.display = 'block';
+            this.qualityIndicator.style.display = 'block';
+            this.updateStatus('Please place your finger on the sensor', 'info');
+        }
+
+        hideProgress() {
+            if (!this.isCapturing) {
+                this.registerBtn.disabled = false;
+                this.cancelBtn.style.display = 'none';
+                this.captureProgress.style.display = 'none';
+                this.qualityIndicator.style.display = 'none';
+            }
+        }
+
+        updateStatus(message, type) {
+            this.statusMessage.className = 'mt-3';
+            this.statusMessage.classList.add(`status-${type}`);
+            this.statusMessage.textContent = message;
+        }
+
+        showError(message) {
+            this.updateStatus(message, 'error');
+        }
+
+        showSuccess(message) {
+            this.updateStatus(message, 'success');
+        }
+
+        cancelRegistration() {
+            if (this.isCapturing) {
+                this.isCapturing = false;
+                this.hideProgress();
+                this.updateStatus('Registration cancelled', 'info');
+            }
+        }
+
+        base64ToArrayBuffer(base64) {
+            const binary = window.atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        new FingerprintSetup();
+    });
+</script>
+{% endblock content %}

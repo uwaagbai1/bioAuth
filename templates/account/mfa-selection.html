@@ -1,0 +1,34 @@
+{% extends "account/base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+   <div class="card max-w-[370px] w-full">
+       <div class="card-body flex flex-col gap-5 p-10">
+           <div class="text-center mb-2.5">
+               {% if profile_first_name and profile_last_name %}
+                   <h3 class="text-lg font-medium text-gray-900 leading-none mb-2.5">
+                       Welcome {{ profile_first_name }} {{ profile_last_name }}
+                   </h3>
+               {% endif %}
+               <h3 class="text-lg font-medium text-gray-900 leading-none mb-2.5">Choose Authentication Method</h3>
+           </div>
+
+           {% csrf_token %}
+           {% if mfa_options.face_id %}
+               <a href="{% url 'face-login' %}" class="btn btn-primary flex justify-center grow">Use Face ID</a>
+           {% endif %}
+           {% if mfa_options.fingerprint %}
+               <a href="{% url 'fingerprint-login' %}" class="btn btn-primary flex justify-center grow">Use Fingerprint</a>
+           {% endif %}
+
+           {% if messages %}
+               <div class="text-center">
+                   {% for message in messages %}
+                       <p class="text-base font-semibold" style="color: red">{{ message }}</p>
+                   {% endfor %}
+               </div>
+           {% endif %}
+       </div>
+   </div>
+{% endblock %}

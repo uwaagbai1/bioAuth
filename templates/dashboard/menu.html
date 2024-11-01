@@ -1,0 +1,73 @@
+<!-- Container -->
+     <div class="container-fixed" id="content_container">
+     </div>
+     <!-- End of Container -->
+
+     <div class="flex items-center flex-wrap md:flex-nowrap lg:items-end justify-between border-b border-b-gray-200 dark:border-b-coal-100 gap-3 lg:gap-6 mb-5 lg:mb-10">
+      <!-- Container -->
+      <div class="container-fixed" id="hero_container">
+       <div class="grid">
+        <div class="scrollable-x-auto">
+         <div class="menu gap-3" data-menu="true">
+
+          <div class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary here" data-menu-item-placement="bottom-start" data-menu-item-toggle="dropdown" data-menu-item-trigger="click|lg:hover">
+           <div class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" tabindex="0">
+            <span class="menu-title text-nowrap text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-medium menu-item-here:text-primary menu-item-here:font-medium menu-item-show:text-primary menu-link-hover:text-primary">
+             Account Home
+            </span>
+            <span class="menu-arrow">
+             <i class="ki-filled ki-down text-2xs text-gray-500 menu-item-active:text-primary menu-item-here:text-primary menu-item-show:text-primary menu-link-hover:text-primary">
+             </i>
+            </span>
+           </div>
+           <div class="menu-dropdown menu-default py-2 min-w-[200px]">
+
+            <div class="menu-item {% if request.path == '/dashboard' %}active{% endif %}">
+             <a class="menu-link" href="{% url 'profile-home' %}" tabindex="0">
+              <span class="menu-title">
+               Get Started
+              </span>
+             </a>
+            </div>
+
+            <div class="menu-item {% if request.path == '/dashboard/account/information' %}active{% endif %}">
+             <a class="menu-link" href="{% url 'account-information' %}" tabindex="0">
+              <span class="menu-title">
+               User Profile
+              </span>
+             </a>
+            </div>
+
+            <div class="menu-item {% if request.path == '/mfa/setup/face-id' %}active{% endif %}">
+             <a class="menu-link" href="{% url 'setup-face' %}" tabindex="0">
+              <span class="menu-title">
+               Face Setup
+              </span>
+             </a>
+            </div>
+
+            <div class="menu-item {% if request.path == '/mfa/setup/fingerprint' %}active{% endif %}">
+             <a class="menu-link" href="{% url 'setup-fingerprint' %}" tabindex="0">
+              <span class="menu-title">
+               Fingerprint Setup
+              </span>
+             </a>
+            </div>
+
+
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- End of Container -->
+     </div>
+
+    {% if messages %}
+           <div class="text-center">
+           {% for message in messages %}
+               <p class="text-base font-semibold" style="color: green">{{ message }}</p>
+           {% endfor %}
+          </div>
+       {% endif %}

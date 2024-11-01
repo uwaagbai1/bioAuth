@@ -1,0 +1,167 @@
+{% extends "account/base.html" %}
+{% load static %}
+
+{% block title %}Face ID Login{% endblock %}
+
+{% block content %}
+<div class="card max-w-[370px] w-full mx-auto">
+    <div class="card-body flex flex-col gap-5 p-10 text-center">
+        <h3 class="text-lg font-medium text-gray-900 leading-none mb-2.5">Face ID Login</h3>
+
+        <div class="mt-4 flex justify-center">
+            <div id="loader" class="mt-3" style="display: none;">Loading models...</div>
+            <button id="startAuthButton" class="btn btn-primary">Start Face Authentication</button>
+            <button id="cancelButton" class="btn btn-secondary" style="display: none;">Cancel</button>
+            <div id="statusMessage" class="mt-3 text-gray-700 text-sm"></div>
+        </div>
+
+        <div class="mt-4 position-relative">
+            <div id="videoContainer" style="display: none;">
+                <video id="video" width="320" height="240" autoplay playsinline></video>
+                <canvas id="overlay" width="320" height="240" style="position: absolute; left: 50%; transform: translateX(-50%);"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+<script type="text/javascript">
+    let videoStream = null;
+    let faceDetectionInterval = null;
+    let isModelLoaded = false;
+    const MODEL_URL = "{% static 'models' %}";
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            document.getElementById('loader').style.display = 'block';
+            await loadModels();
+            isModelLoaded = true;
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('startAuthButton').disabled = false;
+        } catch (error) {
+            console.error("Model loading error:", error);
+            document.getElementById("statusMessage").innerHTML = 
+                `Error loading face detection models: ${error.message}`;
+        }
+    });
+
+    async function loadModels() {
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_URL}`),
+            faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_URL}`),
+            faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_URL}`)
+        ]);
+        console.log("Models loaded successfully");
+    }
+
+    document.getElementById('startAuthButton').addEventListener('click', startFaceAuthentication);
+    document.getElementById('cancelButton').addEventListener('click', stopFaceAuthentication);
+
+    async function startFaceAuthentication() {
+        const videoContainer = document.getElementById('videoContainer');
+        const startButton = document.getElementById('startAuthButton');
+        const cancelButton = document.getElementById('cancelButton');
+        const statusMessage = document.getElementById('statusMessage');
+
+        startButton.style.display = 'none';
+        cancelButton.style.display = 'inline-block';
+        videoContainer.style.display = 'block';
+        statusMessage.innerText = "Initializing camera...";
+
+        try {
+            await initializeCamera();
+            statusMessage.innerText = "Position your face in the frame...";
+            startFaceDetectionLoop();
+        } catch (error) {
+            statusMessage.innerText = `Error: ${error.message}`;
+            stopFaceAuthentication();
+        }
+    }
+
+    async function stopFaceAuthentication() {
+        const videoContainer = document.getElementById('videoContainer');
+        const startButton = document.getElementById('startAuthButton');
+        const cancelButton = document.getElementById('cancelButton');
+        
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        
+        if (faceDetectionInterval) {
+            clearInterval(faceDetectionInterval);
+            faceDetectionInterval = null;
+        }
+
+        videoContainer.style.display = 'none';
+        startButton.style.display = 'inline-block';
+        cancelButton.style.display = 'none';
+    }
+
+    async function initializeCamera() {
+        const video = document.getElementById('video');
+
+        videoStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 320, height: 240, facingMode: "user", frameRate: { ideal: 30 } },
+            audio: false
+        });
+        video.srcObject = videoStream;
+    }
+
+    function startFaceDetectionLoop() {
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        const displaySize = { width: video.width, height: video.height };
+        faceapi.matchDimensions(overlay, displaySize);
+
+        faceDetectionInterval = setInterval(async () => {
+            if (!isModelLoaded || video.paused || video.ended) return;
+
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+            if (detection) {
+                const resizedDetection = faceapi.resizeResults(detection, displaySize);
+                faceapi.draw.drawDetections(overlay, [resizedDetection]);
+                faceapi.draw.drawFaceLandmarks(overlay, [resizedDetection]);
+                authenticateFace(detection.descriptor);
+            } else {
+                document.getElementById('statusMessage').innerText = "No face detected. Ensure your face is clearly visible.";
+            }
+        }, 1000);
+    }
+
+    async function authenticateFace(faceDescriptor) {
+        document.getElementById('statusMessage').innerText = "Authenticating...";
+
+        const response = await fetch("{% url 'face-login' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ faceDescriptor: Array.from(faceDescriptor), email: '{{ request.session.auth_email }}' })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            document.getElementById('statusMessage').innerText = "Face verified successfully!";
+            window.location.href = data.redirect_url; // Change to your desired redirect URL
+        } else {
+            document.getElementById('statusMessage').innerText = data.message || "Verification failed";
+            stopFaceAuthentication();
+        }
+    }
+</script>
+
+<style>
+    .btn { padding: 10px 20px; margin: 10px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-primary { background-color: #007bff; color: white; }
+    .btn-secondary { background-color: #6c757d; color: white; }
+    .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+    #videoContainer { width: 320px; height: 240px; margin: 0 auto; position: relative; }
+    #overlay { position: absolute; top: 0; left: 0; }
+</style>
+{% endblock %}

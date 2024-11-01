@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html class="h-full" data-theme="true" data-theme-mode="light" dir="ltr" lang="en">
+<head>
+  <title>
+   {% block title %}{% endblock title %} - Biometrics Authentication 
+  </title>
+    {% load static %}
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{%  static 'media/apple-touch-icon.png' %}">
+<link rel="icon" type="image/png" sizes="32x32" href="{%  static 'media/favicon-32x32.png' %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{%  static 'media/favicon-16x16.png' %}">
+<link rel="manifest" href="{%  static 'media/site.webmanifest' %}">
+  <link href="{% static 'fonts.googleapis.com/css2fb67.css?family=Inter:wght@400;500;600;700&amp;display=swap' %}" rel="stylesheet"/>
+  <link href="{% static 'vendors/apexcharts/apexcharts.css' %}" rel="stylesheet"/>
+  <link href="{% static 'vendors/keenicons/styles.bundle.css' %}" rel="stylesheet"/>
+  <link href="{% static 'css/styles.css' %}" rel="stylesheet"/>
+
+ </head>
+ <body class="antialiased flex h-full text-base text-gray-700 [--tw-page-bg:#fefefe] [--tw-page-bg-dark:var(--tw-coal-500)] demo1 sidebar-fixed header-fixed bg-[--tw-page-bg] dark:bg-[--tw-page-bg-dark]">
+  <!-- Theme Mode -->
+  <script>
+   const defaultThemeMode = 'light';
+		let themeMode;
+
+		if ( document.documentElement ) {
+			if ( localStorage.getItem('theme')) {
+					themeMode = localStorage.getItem('theme');
+			} else if ( document.documentElement.hasAttribute('data-theme-mode')) {
+				themeMode = document.documentElement.getAttribute('data-theme-mode');
+			} else {
+				themeMode = defaultThemeMode;
+			}
+
+			if (themeMode === 'system') {
+				themeMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+			}
+
+			document.documentElement.classList.add(themeMode);
+		}
+  </script>
+  <!-- End of Theme Mode -->
+  <!-- Page -->
+  <!-- Main -->
+  <div class="flex grow">
+   <!-- Sidebar -->
+   <div class="sidebar dark:bg-coal-600 bg-light border-e border-e-gray-200 dark:border-e-coal-100 fixed top-0 bottom-0 z-20 hidden lg:flex flex-col items-stretch shrink-0" data-drawer="true" data-drawer-class="drawer drawer-start top-0 bottom-0" data-drawer-enable="true|lg:false" id="sidebar">
+    <div class="sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0" id="sidebar_header">
+     <a class="dark:hidden" href="{% url 'profile-home' %}">
+      <img class="default-logo min-h-[22px] max-w-none" src="{% static 'media/futo_logo-removebg-preview.png' %}" width="100px"/>
+      <img class="small-logo min-h-[22px] max-w-none" src="{% static 'media/futo_logo-removebg-preview.png' %}" width="100px"/>
+     </a>
+     <a class="hidden dark:block" href="{% url 'profile-home' %}">
+      <img class="default-logo min-h-[22px] max-w-none" src="{% static 'media/futo_logo-removebg-preview.png' %}" width="100px"/>
+      <img class="small-logo min-h-[22px] max-w-none" src="{% static 'media/futo_logo-removebg-preview.png' %}" width="100px"/>
+     </a>
+     <button class="btn btn-icon btn-icon-md size-[30px] rounded-lg border border-gray-200 dark:border-gray-300 bg-light text-gray-500 hover:text-gray-700 toggle absolute start-full top-2/4 -translate-x-2/4 rtl:translate-x-2/4 -translate-y-2/4" data-toggle="body" data-toggle-class="sidebar-collapse" id="sidebar_toggle">
+      <i class="ki-filled ki-black-left-line toggle-active:rotate-180 transition-all duration-300">
+      </i>
+     </button>
+    </div>
+    <div class="sidebar-content flex grow shrink-0 pt-2 lg:pt-0 pe-2" id="sidebar_content">
+     <div class="scrollable-y-hover grow shrink-0 flex ps-2 lg:ps-5 pe-1 lg:pe-3" data-scrollable="true" data-scrollable-dependencies="#sidebar_header" data-scrollable-height="auto" data-scrollable-offset="0px" data-scrollable-wrappers="#sidebar_content" id="sidebar_scrollable">
+      <!-- Sidebar Menu -->
+      <div class="menu flex flex-col grow gap-0.5" data-menu="true" data-menu-accordion-expand-all="false" id="sidebar_menu">
+
+       <div class="menu-item pt-2.25 pb-px">
+        <span class="menu-heading uppercase text-2sm font-medium text-gray-500 ps-[10px] pe-[10px]">
+         User
+        </span>
+       </div>
+
+       <div class="menu-item here show" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+         <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+          <i class="ki-filled ki-setting-2 text-lg">
+          </i>
+         </span>
+         <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+          My Account
+         </span>
+         <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ml-1 ms-[-10px]">
+          <i class="ki-filled ki-plus text-2xs menu-item-show:hidden">
+          </i>
+          <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex">
+          </i>
+         </span>
+        </div>
+        <div class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+         <div class="menu-item here show" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+          <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]" tabindex="0">
+           <span class="menu-bullet flex w-[6px] relative before:absolute before:top-0 before:size-[6px] before:rounded-full before:-translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+           </span>
+           <span class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
+            Account Home
+           </span>
+           <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ml-1 ms-[-10px]">
+            <i class="ki-filled ki-plus text-2xs menu-item-show:hidden">
+            </i>
+            <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex">
+            </i>
+           </span>
+          </div>
+          <div class="menu-accordion gap-0.5 relative before:absolute before:start-[32px] ps-[22px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+           <div class="menu-item {% if request.path == '/dashboard/' %}active{% endif %}">
+            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]" href="{% url 'profile-home' %}" tabindex="0">
+             <span class="menu-bullet flex w-[6px] relative before:absolute before:top-0 before:size-[6px] before:rounded-full before:-translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+             </span>
+             <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+              Get Started
+             </span>
+            </a>
+           </div>
+           <div class="menu-item {% if request.path == '/dashboard/account/information' %}active{% endif %}">
+            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]" href="{% url 'account-information' %}" tabindex="0">
+             <span class="menu-bullet flex w-[6px] relative before:absolute before:top-0 before:size-[6px] before:rounded-full before:-translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+             </span>
+             <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+              User Profile
+             </span>
+            </a>
+           </div>
+           <div class="menu-item {% if request.path == '/mfa/setup/fingerprint' %}active{% endif %}">
+            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]" href="{% url 'setup-fingerprint' %}" tabindex="0">
+             <span class="menu-bullet flex w-[6px] relative before:absolute before:top-0 before:size-[6px] before:rounded-full before:-translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+             </span>
+             <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+              Fingerprint Setup
+             </span>
+            </a>
+           </div>
+           <div class="menu-item {% if request.path == '/mfa/setup/face-id' %}active{% endif %}">
+            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]" href="{% url 'setup-face' %}" tabindex="0">
+             <span class="menu-bullet flex w-[6px] relative before:absolute before:top-0 before:size-[6px] before:rounded-full before:-translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+             </span>
+             <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+              Face Setup
+             </span>
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- End of Sidebar Menu -->
+     </div>
+    </div>
+   </div>
+   <!-- End of Sidebar -->
+   <!-- Wrapper -->
+   <div class="wrapper flex grow flex-col">
+    <!-- Header -->
+    <header class="header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 bg-[--tw-page-bg] dark:bg-[--tw-page-bg-dark]" data-sticky="true" data-sticky-class="shadow-sm" data-sticky-name="header" id="header">
+     <!-- Container -->
+     <div class="container-fixed flex justify-between items-stretch lg:gap-4" id="header_container">
+      <!-- Mobile Logo -->
+      <div class="flex gap-1 lg:hidden items-center -ms-1">
+       <a class="shrink-0" href="{% url 'profile-home' %}">
+        <img class="max-h-[25px] w-full" src="{%  static 'media/app/mini-logo.svg' %} alt="some logo"/>
+       </a>
+       <div class="flex items-center">
+        <button class="btn btn-icon btn-light btn-clear btn-sm" data-drawer-toggle="#sidebar">
+         <i class="ki-filled ki-menu">
+         </i>
+        </button>
+       </div>
+      </div>
+      <!-- End of Mobile Logo -->
+      <!-- Breadcrumbs -->
+      <div class="flex [.header_&amp;]:below-lg:hidden items-center gap-1.25 text-xs lg:text-sm font-medium mb-2.5 lg:mb-0" data-reparent="true" data-reparent-mode="prepend|lg:prepend" data-reparent-target="#content_container|lg:#header_container">
+       <span class="text-gray-700">
+        My Account
+       </span>
+       <i class="ki-filled ki-right text-gray-500 text-3xs">
+       </i>
+       <span class="text-gray-700">
+        Account Home
+       </span>
+      </div>
+      <!-- End of Breadcrumbs -->
+      <!-- Topbar -->
+      <div class="flex items-center gap-2 lg:gap-3.5">
+       
+
+
+       <div class="menu" data-menu="true">
+        <div class="menu-item" data-menu-item-offset="20px, 10px" data-menu-item-placement="bottom-end" data-menu-item-toggle="dropdown" data-menu-item-trigger="click|lg:click">
+         <div class="menu-toggle btn btn-icon rounded-full">
+          <img alt="" class="size-9 rounded-full border-2 border-success shrink-0" src="{{ request.user.profile.profile_picture.url }}">
+          </img>
+         </div>
+         <div class="menu-dropdown menu-default light:border-gray-300 w-screen max-w-[250px]">
+          <div class="flex items-center justify-between px-5 py-1.5 gap-1.5">
+           <div class="flex items-center gap-2">
+            <img alt="" class="size-9 rounded-full border-2 border-success" src="{{ request.user.profile.profile_picture.url }}">
+             <div class="flex flex-col gap-1.5">
+              <span class="text-sm text-gray-800 font-semibold leading-none">
+               {{  request.user.profile.last_name }}, {{  request.user.profile.first_name }}
+              </span>
+              <a class="text-xs text-gray-600 hover:text-primary font-medium leading-none">
+               {{ request.user.email }}
+              </a>
+             </div>
+            </img>
+           </div>
+           <span class="badge badge-xs badge-primary badge-outline">
+            Pro
+           </span>
+          </div>
+          <div class="menu-separator">
+          </div>
+
+          <div class="flex flex-col">
+
+           <div class="menu-item">
+            <a class="menu-link" href="{% url 'profile-home' %}">
+             <span class="menu-icon">
+              <i class="ki-filled ki-profile-circle">
+              </i>
+             </span>
+             <span class="menu-title">
+              My Profile
+             </span>
+            </a>
+           </div>
+
+           <div class="menu-item" data-menu-item-offset="-50px, 0" data-menu-item-placement="left-start" data-menu-item-toggle="dropdown" data-menu-item-trigger="click|lg:hover">
+            <div class="menu-link">
+             <span class="menu-icon">
+              <i class="ki-filled ki-setting-2">
+              </i>
+             </span>
+             <span class="menu-title">
+              My Account
+             </span>
+             <span class="menu-arrow">
+              <i class="ki-filled ki-right text-3xs">
+              </i>
+             </span>
+            </div>
+            <div class="menu-dropdown menu-default light:border-gray-300 w-full max-w-[220px]">
+             <div class="menu-item">
+              <a class="menu-link" href="{% url 'profile-home' %}">
+               <span class="menu-icon">
+                <i class="ki-filled ki-coffee">
+                </i>
+               </span>
+               <span class="menu-title">
+                Get Started
+               </span>
+              </a>
+             </div>
+
+            </div>
+           </div>
+
+          <div class="menu-separator">
+          </div>
+          <div class="flex flex-col">
+           <div class="menu-item mb-0.5">
+            <div class="menu-link">
+             <span class="menu-icon">
+              <i class="ki-filled ki-moon">
+              </i>
+             </span>
+             <span class="menu-title">
+              Dark Mode
+             </span>
+             <label class="switch switch-sm">
+              <input data-theme-state="dark" data-theme-toggle="true" name="check" type="checkbox" value="1">
+              </input>
+             </label>
+            </div>
+           </div>
+           <div class="menu-item px-4 py-1.5">
+            <a class="btn btn-sm btn-light justify-center" href="{% url 'logout_confirmation' %}">
+             Log out
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- End of Topbar -->
+     </div>
+     </div>
+     <!-- End of Container -->
+    </header>
+    <!-- End of Header -->
+    <!-- Content -->
+       
+       {% block content %}
+       {% endblock content %}
+    <footer class="footer">
+     <!-- Container -->
+     <div class="container-fixed">
+      <div class="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
+       <div class="flex order-2 md:order-1 gap-2 font-normal text-2sm">
+        <span class="text-gray-500">
+         2024©
+        </span>
+        <a class="text-gray-600 hover:text-primary" href="/">
+         Multi-Factor Authentication
+        </a>
+       </div>
+       <nav class="flex order-1 md:order-2 gap-4 font-normal text-2sm text-gray-600">
+        <a class="hover:text-primary" href="#">
+         Docs
+        </a>
+        <a class="hover:text-primary" href="#">
+         Support
+        </a>
+        <a class="hover:text-primary" href="#">
+         License
+        </a>
+       </nav>
+      </div>
+     </div>
+     <!-- End of Container -->
+    </footer>
+    <!-- End of Footer -->
+   </div>
+   <!-- End of Wrapper -->
+  </div>
+  <!-- End of Main -->
+  <!-- End of Page -->
+  <!-- Scripts -->
+  <script src="{% static 'js/core.bundle.js' %}">
+  </script>
+  <script src="{% static 'vendors/apexcharts/apexcharts.min.js' %}">
+  </script>
+  <script src="{% static 'js/layouts/demo1.js' %}">
+  </script>
+  <!-- End of Scripts -->
+ </body>
+</html>

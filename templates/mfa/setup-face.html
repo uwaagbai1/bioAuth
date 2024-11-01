@@ -1,0 +1,257 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}MFA Setup Face ID{% endblock title %}
+
+{% block content %}
+<main class="grow content pt-5" id="content" role="content">
+    {% include 'dashboard/menu.html' %}
+    
+    <div class="container-fixed text-center">
+        <h1 class="text-lg leading-5 font-semibold text-gray-900">Face ID Setup</h1><br>
+        <div id="loader" class="mt-3" style="display: none;">Loading models...</div>
+        {% if user.mfaprofile.face_data %}
+            <button id="startEnrollButton" class="btn btn-primary">Enroll Your Face Again</button>
+        {% else %}
+            <button id="startEnrollButton" class="btn btn-primary">Enroll Your Face</button>
+        {% endif %}
+        <button id="cancelButton" class="btn btn-secondary" style="display: none;">Cancel</button>
+        <div id="statusMessage" class="mt-3"></div>
+    </div>
+    
+    <div class="text-center mt-4 position-relative">
+        <div id="videoContainer" style="display: none;">
+            <video id="video" width="320" height="240" autoplay playsinline></video>
+            <canvas id="overlay" width="320" height="240" style="position: absolute; left: 50%; transform: translateX(-50%);"></canvas>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+
+<script type="text/javascript">
+    let isModelLoaded = false;
+    let videoStream = null;
+    let faceDetectionInterval = null;
+    let isProcessing = false;
+    const MODEL_URL = "{% static 'models' %}";
+    
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            await loadModels();
+            isModelLoaded = true;
+            document.getElementById('startEnrollButton').disabled = false;
+        } catch (error) {
+            console.error("Model loading error:", error);
+            document.getElementById("statusMessage").innerHTML = 
+                `Error loading face detection models: ${error.message}`;
+        }
+    });
+
+    async function loadModels() {
+        document.getElementById('loader').style.display = 'block';
+        try {
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_URL}`),
+                faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_URL}`),
+                faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_URL}`)
+            ]);
+            console.log("Models loaded successfully");
+        } catch (error) {
+            throw new Error(`Failed to load models: ${error.message}`);
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    document.getElementById('startEnrollButton').addEventListener('click', startEnrollment);
+    document.getElementById('cancelButton').addEventListener('click', stopEnrollment);
+
+    async function startEnrollment() {
+        const videoContainer = document.getElementById('videoContainer');
+        const startButton = document.getElementById('startEnrollButton');
+        const cancelButton = document.getElementById('cancelButton');
+        const statusMessage = document.getElementById('statusMessage');
+
+        try {
+            startButton.style.display = 'none';
+            cancelButton.style.display = 'inline-block';
+            videoContainer.style.display = 'block';
+            statusMessage.innerText = "Initializing camera...";
+
+            await initializeCamera();
+            startFaceDetectionLoop();
+            
+            statusMessage.innerText = "Position your face in the frame...";
+        } catch (error) {
+            statusMessage.innerText = `Error: ${error.message}`;
+            stopEnrollment();
+        }
+    }
+
+    async function stopEnrollment() {
+        const videoContainer = document.getElementById('videoContainer');
+        const startButton = document.getElementById('startEnrollButton');
+        const cancelButton = document.getElementById('cancelButton');
+        
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        
+        if (faceDetectionInterval) {
+            clearInterval(faceDetectionInterval);
+            faceDetectionInterval = null;
+        }
+
+        videoContainer.style.display = 'none';
+        startButton.style.display = 'inline-block';
+        cancelButton.style.display = 'none';
+        isProcessing = false;
+    }
+
+    async function initializeCamera() {
+        const video = document.getElementById('video');
+
+        try {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+
+            videoStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 320 },
+                    height: { ideal: 240 },
+                    facingMode: "user",
+                    frameRate: { ideal: 30 }
+                },
+                audio: false
+            });
+
+            video.srcObject = videoStream;
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    video.play();
+                    resolve();
+                };
+            });
+        } catch (error) {
+            if (error.name === 'NotAllowedError') {
+                throw new Error("Camera access denied. Please enable camera access and try again.");
+            } else {
+                throw new Error(`Camera error: ${error.message}`);
+            }
+        }
+    }
+
+    function startFaceDetectionLoop() {
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        const displaySize = { width: video.width, height: video.height };
+        faceapi.matchDimensions(overlay, displaySize);
+        let consecutiveGoodFrames = 0;
+        
+        faceDetectionInterval = setInterval(async () => {
+            if (!isModelLoaded || video.paused || video.ended || isProcessing) return;
+
+            try {
+                const detection = await faceapi.detectSingleFace(
+                    video, 
+                    new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
+                ).withFaceLandmarks()
+                .withFaceDescriptor();
+
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+                if (detection) {
+                    const resizedDetection = faceapi.resizeResults(detection, displaySize);
+                    faceapi.draw.drawDetections(overlay, [resizedDetection]);
+                    faceapi.draw.drawFaceLandmarks(overlay, [resizedDetection]);
+                    
+                    if (isFaceWellPositioned(detection)) {
+                        consecutiveGoodFrames++;
+                        if (consecutiveGoodFrames >= 10) { // Wait for 10 good frames
+                            await processAndSaveFace(detection);
+                        } else {
+                            document.getElementById('statusMessage').innerText = 
+                                `Hold still... ${Math.round((consecutiveGoodFrames/10) * 100)}%`;
+                        }
+                    } else {
+                        consecutiveGoodFrames = 0;
+                        document.getElementById('statusMessage').innerText = 
+                            "Position your face in the center...";
+                    }
+                } else {
+                    consecutiveGoodFrames = 0;
+                    document.getElementById('statusMessage').innerText = 
+                        "No face detected. Please face the camera.";
+                }
+            } catch (error) {
+                console.error("Face detection error:", error);
+            }
+        }, 100);
+    }
+
+    function isFaceWellPositioned(detection) {
+        const box = detection.detection.box;
+        const centerX = box.x + (box.width / 2);
+        const centerY = box.y + (box.height / 2);
+        
+        return (
+            box.width > 100 &&
+            box.width < 250 &&
+            centerX > 80 && centerX < 240 &&
+            centerY > 60 && centerY < 180
+        );
+    }
+
+    async function processAndSaveFace(detection) {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        const statusMessage = document.getElementById('statusMessage');
+        statusMessage.innerText = "Processing...";
+        
+        try {
+            const faceDescriptor = Array.from(detection.descriptor);
+            
+            const response = await fetch("{% url 'setup-face' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ 
+                    facialId: faceDescriptor
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || "Error saving face data");
+            }
+            statusMessage.innerText = "Face ID successfully enrolled!";
+            statusMessage.style.color = "green";
+            stopEnrollment();
+        } catch (error) {
+            statusMessage.innerText = `Error: ${error.message}`;
+            statusMessage.style.color = "red";
+            isProcessing = false;
+        }
+    }
+</script>
+
+<style>
+    #videoContainer {
+        width: 320px;
+        height: 240px;
+        margin: 0 auto;
+        position: relative;
+    }
+    #overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+</style>
+{% endblock content %}

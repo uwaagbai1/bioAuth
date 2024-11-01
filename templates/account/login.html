@@ -1,0 +1,88 @@
+{% extends "account/base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="card max-w-[370px] w-full">
+    <form class="card-body flex flex-col gap-5 p-10" id="sign_in_form" method="post" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        
+        <div class="text-center mb-2.5">
+            <h3 class="text-lg font-medium text-gray-900 leading-none mb-2.5">Multi-Factor Authentication</h3>
+            <div class="flex items-center justify-center font-medium">
+                <span class="text-2sm text-gray-700 me-1.5">Need an account?</span>
+                <a class="text-2sm link" href="{% url 'account_signup' %}">Sign up</a>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <span class="border-t border-gray-200 w-full"></span>
+            <span class="border-t border-gray-200 w-full"></span>
+        </div>
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error text-center">
+                {% for error in form.non_field_errors %}
+                    <p >{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <div class="flex flex-col gap-1">
+            <label class="form-label font-normal text-gray-900" for="id_login">Email</label>
+            <input class="input {% if form.login.errors %}input-error{% endif %}" 
+                   placeholder="email@email.com" 
+                   id="id_login" 
+                   name="login" 
+                   type="email" 
+                   value="{{ form.login.value|default:'' }}" 
+                   required>
+            {% if form.login.errors %}
+                <div class="text-red-500 text-sm">
+                    {% for error in form.login.errors %}
+                        <p class="text-base font-semibold text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-1">
+                <label class="form-label font-normal text-gray-900" for="id_password">Password</label>
+                <a class="text-2sm link shrink-0" href="{% url 'account_reset_password' %}">Forgot Password?</a>
+            </div>
+            <div class="input {% if form.password.errors %}input-error{% endif %}" data-toggle-password="true">
+                <input placeholder="Enter Password" 
+                       type="password" 
+                       id="id_password" 
+                       name="password" 
+                       value="" 
+                       required>
+                <button class="btn btn-icon" data-toggle-password-trigger="true" type="button">
+                    <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
+                    <i class="ki-filled ki-eye-slash text-gray-500 hidden toggle-password-active:block"></i>
+                </button>
+            </div>
+            {% if form.password.errors %}
+                <div class="text-red-500 text-sm">
+                    {% for error in form.password.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn btn-primary flex justify-center grow">Continue</button>
+        
+        {% if messages %}
+            <div class="text-center">
+                {% for message in messages %}
+                    <p class="text-base font-semibold {% if message.tags %}text-{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

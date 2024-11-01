@@ -1,0 +1,65 @@
+{% extends "account/base.html" %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+    <div class="card max-w-[370px] w-full">
+        <form class="card-body flex flex-col gap-5 p-10" id="sign_up_form" method="post">
+            {% csrf_token %}
+            <div class="text-center mb-2.5">
+                <h3 class="text-lg font-medium text-gray-900 leading-none mb-2.5">Multi-Factor Authentication</h3>
+                <div class="flex items-center justify-center font-medium">
+                    <span class="text-2sm text-gray-700 me-1.5">You already have an account?</span>
+                    <a class="text-2sm link" href="{% url 'account_login' %}">Login</a>
+                </div>
+            </div>
+            <div class="text-center mb-2.5">
+                <h3 class="text-lg font-medium text-gray-900 leading-none mb-2.5">Create an Account</h3>
+            </div>
+        
+            <div class="flex flex-col gap-1">
+                <input class="input" placeholder="Email" id="email" name="email" type="email" value="" required>
+                <small class="form-text text-muted" style="color: red">{{ form.email.errors }}</small>
+            </div>
+            
+            <div class="flex flex-col gap-1">
+                <div class="input" data-toggle-password="true">
+                    <input placeholder="Password" id="password1" name="password1" type="password" value="" required>
+                    <button class="btn btn-icon" data-toggle-password-trigger="true" type="button">
+                        <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
+                        <i class="ki-filled ki-eye-slash text-gray-500 hidden toggle-password-active:block"></i>
+                    </button>
+                </div>
+                <div class="flex items-center justify-between gap-1">
+                    {% if form.password1.errors %}
+                        <small class="form-text text-muted" style="color: red">{{ form.password1.errors }}</small>
+                    {% else %}
+                        <small class="form-text text-muted">Your password must contain at least 8 characters.</small>
+                    {% endif %}
+                </div>
+            </div>
+        
+            <div class="flex flex-col gap-1">
+                <div class="input" data-toggle-password="true">
+                    <input placeholder="Confirm Password" id="password2" name="password2" type="password" value="" required>
+                    <button class="btn btn-icon" data-toggle-password-trigger="true" type="button">
+                        <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
+                        <i class="ki-filled ki-eye-slash text-gray-500 hidden toggle-password-active:block"></i>
+                    </button>
+                </div>
+                <div class="flex items-center justify-between gap-1">
+                    <small class="form-text text-muted" style="color: red">{{ form.password2.errors }}</small>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary flex justify-center grow">Sign Up</button>
+            {% if messages %}
+               <div class="text-center">
+               {% for message in messages %}
+                   <p class="text-base font-semibold" style="color: red">{{ message }}, try again later</p>
+               {% endfor %}
+              </div>
+           {% endif %}
+        </form>
+    </div>
+{% endblock %}
